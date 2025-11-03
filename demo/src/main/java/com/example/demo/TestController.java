@@ -8,6 +8,6 @@ public class TestController {
     
     public ResponseEntity<?> test() {
 
-        return ResponseEntity.ok().body("test1");
+        return ResponseEntity.ok().body("test2");
     }
 }

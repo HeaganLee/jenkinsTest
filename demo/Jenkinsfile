@@ -40,7 +40,7 @@ pipeline {
                     scp -o StrictHostKeyChecking=no $JAR_FILE $DEPLOY_SERVER:/root/${APP_NAME}.jar
 
                     echo "🛑 기존 프로세스 종료 시도 중..."
-                    ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "PATH=\\$PATH:/usr/bin /usr/bin/pkill -f ${APP_NAME} || echo '⚠️ 기존 프로세스 없음'"
+                    ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "PATH=\\$PATH:/usr/bin /usr/bin/pkill -f ${APP_NAME} || echo '⚠️ 기존 프로세스 없음'" || true
 
                     echo "🚀 새 프로세스 실행 중..."
                     ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "nohup /usr/bin/java -jar /root/${APP_NAME}.jar > /root/app.log 2>&1 &"

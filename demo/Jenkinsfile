@@ -25,7 +25,7 @@ pipeline {
                     sh '''
                     set -e
                     echo "📦 배포 서버에 jar 복사 중..."
-                    JAR_FILE=$(find demo/build/libs -type f -name "*.jar" | head -n 1)
+                    JAR_FILE=$(find demo/build/libs -type f -name "*SNAPSHOT.jar" ! -name "*plain.jar" | head -n 1)
                     echo "✅ 찾은 JAR 파일: $JAR_FILE"
 
                     if [ -z "$JAR_FILE" ]; then

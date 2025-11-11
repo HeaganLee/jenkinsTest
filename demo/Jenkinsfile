@@ -7,7 +7,6 @@ pipeline {
     }
 
     stages {
-
         stage('Build') {
             steps {
                 sh '''
@@ -24,6 +23,7 @@ pipeline {
             steps {
                 sshagent(['root']) {
                     sh '''
+                    set -e
                     echo "📦 배포 서버에 jar 복사 중..."
                     JAR_FILE=$(find demo/build/libs -type f -name "*.jar" | head -n 1)
                     echo "✅ 찾은 JAR 파일: $JAR_FILE"
@@ -33,13 +33,20 @@ pipeline {
                         exit 1
                     fi
 
+                    echo "➡️ 서버 연결 테스트 중..."
+                    ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "echo '✅ SSH 연결 성공: $(hostname)'"
+
+                    echo "📤 JAR 복사 중..."
                     scp -o StrictHostKeyChecking=no $JAR_FILE $DEPLOY_SERVER:/root/${APP_NAME}.jar
 
-                    echo "🛑 기존 프로세스 종료 중..."
-                    ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "pkill -f ${APP_NAME} || true"
+                    echo "🛑 기존 프로세스 종료 시도 중..."
+                    ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "pkill -f ${APP_NAME} || echo '⚠️ 기존 프로세스 없음'"
 
                     echo "🚀 새 프로세스 실행 중..."
                     ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "nohup java -jar /root/${APP_NAME}.jar > /root/app.log 2>&1 &"
+
+                    echo "📋 현재 실행 중 프로세스 확인:"
+                    ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "ps aux | grep ${APP_NAME} || true"
 
                     echo "🎉 배포 완료!"
                     '''

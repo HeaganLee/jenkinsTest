@@ -4,41 +4,56 @@ pipeline {
     environment {
         DEPLOY_SERVER = 'ubuntu@49.50.134.161'
         APP_NAME = 'my-backend'
-        JAR_PATH = 'demo/build/libs/my-backend-0.0.1-SNAPSHOT.jar'
     }
 
-   stage('Deploy') {
-    steps {
-        sshagent(['ubuntu']) {
-            sh '''
-            echo "📦 배포 서버에 jar 복사 중..."
-            JAR_FILE=$(find demo/build/libs -type f -name "*.jar" | head -n 1)
-            echo "✅ 찾은 JAR 파일: $JAR_FILE"
+    stages {
 
-            if [ -z "$JAR_FILE" ]; then
-                echo "❌ JAR 파일을 찾지 못했습니다. 빌드 결과를 확인하세요."
-                exit 1
-            fi
+        stage('Build') {
+            steps {
+                sh '''
+                echo "🔨 Gradle 빌드 시작..."
+                cd demo
+                chmod +x gradlew
+                ./gradlew clean build -x test
+                echo "✅ 빌드 완료"
+                '''
+            }
+        }
 
-            scp $JAR_FILE $DEPLOY_SERVER:/home/ubuntu/$APP_NAME.jar
+        stage('Deploy') {
+            steps {
+                sshagent(['ubuntu']) {
+                    sh '''
+                    echo "📦 배포 서버에 jar 복사 중..."
+                    JAR_FILE=$(find demo/build/libs -type f -name "*.jar" | head -n 1)
+                    echo "✅ 찾은 JAR 파일: $JAR_FILE"
 
-            echo "🛑 기존 프로세스 종료 중..."
-            ssh $DEPLOY_SERVER "pkill -f $APP_NAME || true"
+                    if [ -z "$JAR_FILE" ]; then
+                        echo "❌ JAR 파일을 찾지 못했습니다. 빌드 결과를 확인하세요."
+                        exit 1
+                    fi
 
-            echo "🚀 새 프로세스 실행 중..."
-            ssh $DEPLOY_SERVER "nohup java -jar /home/ubuntu/$APP_NAME.jar > app.log 2>&1 &"
-            '''
+                    scp $JAR_FILE $DEPLOY_SERVER:/home/ubuntu/$APP_NAME.jar
+
+                    echo "🛑 기존 프로세스 종료 중..."
+                    ssh $DEPLOY_SERVER "pkill -f $APP_NAME || true"
+
+                    echo "🚀 새 프로세스 실행 중..."
+                    ssh $DEPLOY_SERVER "nohup java -jar /home/ubuntu/$APP_NAME.jar > app.log 2>&1 &"
+
+                    echo "🎉 배포 완료!"
+                    '''
+                }
+            }
         }
     }
-}
-
 
     post {
         success {
-            echo "✅ 배포 성공!"
+            echo "✅ 전체 파이프라인 성공!"
         }
         failure {
-            echo "❌ 배포 실패!"
+            echo "❌ 파이프라인 실패!"
         }
     }
 }

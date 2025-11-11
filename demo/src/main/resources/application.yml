@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: demo
+
+  datasource:
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://49.50.134.161:3306/mydb
+    username: root
+    password: rkdldhrk12#
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 30000
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: update   # create, update, validate, none 중 선택 가능
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MariaDBDialect
+        format_sql: true
+    show-sql: true
+
+server:
+  port: 8080

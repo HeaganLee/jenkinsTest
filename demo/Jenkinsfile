@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DEPLOY_SERVER = 'ubuntu@49.50.134.161'
+        DEPLOY_SERVER = 'root@49.50.134.161'
         APP_NAME = 'my-backend'
     }
 
@@ -22,7 +22,7 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sshagent(['ubuntu']) {
+                sshagent(['root']) {
                     sh '''
                     echo "📦 배포 서버에 jar 복사 중..."
                     JAR_FILE=$(find demo/build/libs -type f -name "*.jar" | head -n 1)
@@ -33,13 +33,13 @@ pipeline {
                         exit 1
                     fi
 
-                    scp $JAR_FILE $DEPLOY_SERVER:/home/ubuntu/$APP_NAME.jar
+                    scp -o StrictHostKeyChecking=no $JAR_FILE $DEPLOY_SERVER:/root/${APP_NAME}.jar
 
                     echo "🛑 기존 프로세스 종료 중..."
-                    ssh $DEPLOY_SERVER "pkill -f $APP_NAME || true"
+                    ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "pkill -f ${APP_NAME} || true"
 
                     echo "🚀 새 프로세스 실행 중..."
-                    ssh $DEPLOY_SERVER "nohup java -jar /home/ubuntu/$APP_NAME.jar > app.log 2>&1 &"
+                    ssh -o StrictHostKeyChecking=no $DEPLOY_SERVER "nohup java -jar /root/${APP_NAME}.jar > /root/app.log 2>&1 &"
 
                     echo "🎉 배포 완료!"
                     '''
